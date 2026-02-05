@@ -3,28 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конвертер EPUB сносок</title>
+    <title>Конвертер EPUB</title>
     <meta name="description" content="Преобразование концевых сносок в EPUB в текст в скобках">
-    <meta name="theme-color" content="#8b4513">
+    <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg width='33' height='18' viewBox='0 0 33 18' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z' fill='black'/%3E%3Cpath d='M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z' fill='black'/%3E%3Cpath d='M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z' fill='black'/%3E%3Cpath d='M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z' fill='black'/%3E%3C/svg%3E">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="EPUB сноски">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="EPUB">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
-        
-        :root {
-            --bg-primary: #faf8f3;
-            --bg-secondary: #f0ebe0;
-            --text-primary: #2b2618;
-            --text-secondary: #6b5e4f;
-            --accent: #8b4513;
-            --accent-light: #c19a6b;
-            --border: #d4c5a9;
-            --shadow: rgba(43, 38, 24, 0.08);
-        }
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap');
         
         * {
             margin: 0;
@@ -32,122 +21,110 @@
             box-sizing: border-box;
         }
         
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+        
         body {
-            font-family: 'Crimson Text', serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 2rem;
-            line-height: 1.7;
+            font-family: 'IBM Plex Mono', monospace;
+            background: #ffffff;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
         }
         
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            animation: fadeIn 0.8s ease-out;
+            max-width: 600px;
+            width: 100%;
+            text-align: left;
         }
         
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .logo {
+            width: 66px;
+            height: 36px;
+            margin-bottom: 48px;
         }
         
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid var(--border);
-            position: relative;
+        .logo svg {
+            width: 100%;
+            height: 100%;
         }
         
-        header::after {
-            content: '❦';
-            position: absolute;
-            bottom: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-primary);
-            padding: 0 1rem;
-            color: var(--accent);
-            font-size: 1.5rem;
+        .description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 48px;
         }
         
-        h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.02em;
+        .description p {
+            margin-bottom: 16px;
         }
         
-        .subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            font-style: italic;
+        .example {
+            margin: 32px 0;
+            padding: 24px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+        
+        .example-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5em;
+            color: #A9A9A9;
+            margin-bottom: 12px;
             font-weight: 400;
         }
         
-        .upload-section {
-            background: white;
-            padding: 3rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px var(--shadow);
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
+        .example-text {
+            font-size: 14px;
+            color: #A9A9A9;
+            line-height: 1.8;
         }
         
-        .upload-section:hover {
-            box-shadow: 0 12px 48px var(--shadow);
-            transform: translateY(-2px);
+        .example-text i {
+            font-style: italic;
         }
         
-        .drop-zone {
-            border: 3px dashed var(--accent-light);
-            border-radius: 8px;
-            padding: 3rem 2rem;
-            text-align: center;
+        .upload-button {
+            width: 100%;
+            padding: 24px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 100px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5em;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: var(--bg-primary);
+            margin-top: 48px;
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         }
         
-        .drop-zone:hover,
-        .drop-zone.drag-over {
-            border-color: var(--accent);
-            background: var(--bg-secondary);
+        .upload-button:hover {
             transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
         }
         
-        .drop-zone-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-            transition: all 0.3s ease;
+        .upload-button:active {
+            transform: scale(0.98);
         }
         
-        .drop-zone:hover .drop-zone-icon {
-            opacity: 0.8;
-            transform: scale(1.1);
+        .upload-button.drag-over {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
         }
         
-        .drop-zone-text {
-            font-size: 1.3rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .drop-zone-hint {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
+        .upload-button.processing {
+            background: #666666;
+            cursor: wait;
+            pointer-events: none;
         }
         
         input[type="file"] {
@@ -155,189 +132,118 @@
         }
         
         .status {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: var(--bg-secondary);
-            border-left: 4px solid var(--accent);
-            border-radius: 4px;
-            font-size: 1.1rem;
-            animation: slideIn 0.4s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .status.success {
-            border-left-color: #4a7c59;
-            background: #e8f5e9;
-            color: #2d5016;
+            margin-top: 24px;
+            font-size: 14px;
+            text-align: center;
+            color: #A9A9A9;
         }
         
         .status.error {
-            border-left-color: #c62828;
-            background: #ffebee;
-            color: #b71c1c;
+            color: #ff0000;
         }
         
-        .status.processing {
-            border-left-color: var(--accent-light);
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid var(--accent-light);
-            border-top: 2px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .info-box {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            margin-bottom: 2rem;
-        }
-        
-        .info-box h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.8rem;
-            color: var(--accent);
-            margin-bottom: 1rem;
-        }
-        
-        .info-box ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .info-box li {
-            padding: 0.5rem 0;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-        
-        .info-box li::before {
-            content: '✦';
-            position: absolute;
-            left: 0;
-            color: var(--accent-light);
-        }
-        
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 6px;
-            margin: 1rem 0;
-        }
-        
-        .file-icon {
-            font-size: 2rem;
-        }
-        
-        .file-details {
-            flex: 1;
-        }
-        
-        .file-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1.1rem;
-        }
-        
-        .file-size {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+        @media (max-width: 640px) {
+            body {
+                padding: 40px 20px;
+                align-items: flex-start;
+            }
+            
+            .logo {
+                width: 55px;
+                height: 30px;
+                margin-bottom: 32px;
+            }
+            
+            .description {
+                font-size: 14px;
+                margin-bottom: 32px;
+            }
+            
+            .example {
+                margin: 24px 0;
+                padding: 20px;
+            }
+            
+            .upload-button {
+                font-size: 14px;
+                letter-spacing: 0.3em;
+                margin-top: 32px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Конвертер EPUB</h1>
-            <p class="subtitle">Преобразование концевых сносок в текст в скобках</p>
-        </header>
-
-        <div class="info-box">
-            <h2>Как это работает?</h2>
-            <ul>
-                <li>Загрузите EPUB файл с концевыми сносками</li>
-                <li>Сервис найдет все ссылки на сноски типа [1], [2] и т.д.</li>
-                <li>Сноски будут вставлены прямо в текст: [текст сноски]</li>
-                <li>Скачайте новый EPUB файл для удобного чтения</li>
-            </ul>
+        <div class="logo">
+            <svg width="33" height="18" viewBox="0 0 33 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z" fill="black"/>
+                <path d="M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z" fill="black"/>
+                <path d="M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z" fill="black"/>
+                <path d="M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z" fill="black"/>
+            </svg>
+        </div>
+        
+        <div class="description">
+            <p>Многие электронные книги содержат ссылки на&nbsp;примечания в&nbsp;конце книги&nbsp;— [1], [2] и&nbsp;так далее.</p>
+            <p>На&nbsp;читалках без сенсорного экрана неудобно переходить по&nbsp;этим ссылкам и&nbsp;возвращаться обратно к&nbsp;тексту.</p>
+            <p>Этот сервис автоматически добавляет текст каждого примечания прямо в&nbsp;книгу, рядом с&nbsp;цифрой-ссылкой.</p>
         </div>
 
-        <div class="upload-section">
-            <div class="drop-zone" id="dropZone">
-                <div class="drop-zone-icon">📚</div>
-                <div class="drop-zone-text">Перетащите EPUB файл сюда</div>
-                <div class="drop-zone-hint">или нажмите для выбора файла</div>
-            </div>
-            <input type="file" id="fileInput" accept=".epub" />
-            
-            <div id="fileInfoContainer"></div>
-            <div id="statusContainer"></div>
+        <div class="example">
+            <div class="example-label">Было</div>
+            <div class="example-text">...в&nbsp;Перу[1] сплели мост...</div>
         </div>
 
-        <footer>
-            <p>Конвертер EPUB сносок · Все файлы обрабатываются локально в вашем браузере</p>
-        </footer>
+        <div class="example">
+            <div class="example-label">Стало</div>
+            <div class="example-text">...в&nbsp;Перу[1] <i>[страна в&nbsp;Южной Америке]</i> сплели мост...</div>
+        </div>
+
+        <div class="description">
+            <p>Загрузите EPUB файл, и&nbsp;получите новый файл, в&nbsp;котором все примечания встроены в&nbsp;текст курсивом в&nbsp;квадратных скобках.</p>
+        </div>
+
+        <button class="upload-button" id="uploadButton">Загрузить</button>
+        <input type="file" id="fileInput" accept=".epub" />
+        
+        <div id="statusContainer"></div>
     </div>
 
     <script>
-        const dropZone = document.getElementById('dropZone');
+        const uploadButton = document.getElementById('uploadButton');
         const fileInput = document.getElementById('fileInput');
         const statusContainer = document.getElementById('statusContainer');
-        const fileInfoContainer = document.getElementById('fileInfoContainer');
-
         const globalFootnotes = new Map();
+        let processedBlob = null;
+        let originalFilename = '';
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
+        uploadButton.addEventListener('click', () => {
+            if (processedBlob) {
+                downloadFile();
+            } else {
+                fileInput.click();
+            }
         });
         
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
+        uploadButton.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!processedBlob) {
+                uploadButton.classList.add('drag-over');
+            }
         });
         
-        dropZone.addEventListener('drop', (e) => {
+        uploadButton.addEventListener('dragleave', () => {
+            uploadButton.classList.remove('drag-over');
+        });
+        
+        uploadButton.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+            uploadButton.classList.remove('drag-over');
+            if (!processedBlob) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
             }
         });
         
@@ -347,23 +253,23 @@
             }
         });
 
-        function showStatus(message, type = 'processing') {
-            const statusClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'processing';
-            const icon = type === 'processing' ? '<span class="spinner"></span>' : '';
-            statusContainer.innerHTML = `<div class="status ${statusClass}">${icon}${message}</div>`;
+        function downloadFile() {
+            if (!processedBlob) return;
+            
+            const url = URL.createObjectURL(processedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFilename.replace('.epub', '_converted.epub');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('Файл скачан');
         }
 
-        function showFileInfo(file) {
-            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-            fileInfoContainer.innerHTML = `
-                <div class="file-info">
-                    <div class="file-icon">📖</div>
-                    <div class="file-details">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${sizeMB} МБ</div>
-                    </div>
-                </div>
-            `;
+        function showStatus(message, type = '') {
+            statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
         }
 
         function stripHtmlTags(html) {
@@ -377,12 +283,14 @@
 
         async function handleFile(file) {
             if (!file.name.endsWith('.epub')) {
-                showStatus('Пожалуйста, выберите файл формата EPUB', 'error');
+                showStatus('Только EPUB файлы', 'error');
                 return;
             }
 
-            showFileInfo(file);
-            showStatus('Загрузка файла...', 'processing');
+            originalFilename = file.name;
+            uploadButton.textContent = 'Обработка...';
+            uploadButton.classList.add('processing');
+            showStatus('Обработка файла...');
 
             try {
                 const zip = await JSZip.loadAsync(file);
@@ -401,7 +309,7 @@
                     }
                 });
                 
-                showStatus('Поиск сносок...', 'processing');
+                showStatus('Поиск примечаний...');
                 
                 const allFiles = [];
                 zip.forEach((relativePath, zipEntry) => {
@@ -413,7 +321,6 @@
                 for (const { relativePath, zipEntry } of allFiles) {
                     if (/\.(x?html?)$/i.test(relativePath)) {
                         const content = await zipEntry.async('string');
-                        // Извлекаем сноски только из файлов с примечаниями
                         if (content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
                             content.includes('Примечание') || content.includes('Notes') || 
                             content.includes('NOTES')) {
@@ -422,8 +329,7 @@
                     }
                 }
                 
-                console.log(`Найдено ${globalFootnotes.size} сносок`);
-                showStatus(`Найдено ${globalFootnotes.size} сносок. Замена ссылок...`, 'processing');
+                showStatus(`Найдено ${globalFootnotes.size} примечаний`);
                 
                 let totalReplacements = 0;
                 
@@ -438,27 +344,23 @@
                     }
                 }
                 
-                showStatus('Создание нового EPUB файла...', 'processing');
+                showStatus('Создание файла...');
                 
-                const blob = await modifiedZip.generateAsync({ 
+                processedBlob = await modifiedZip.generateAsync({ 
                     type: 'blob',
                     mimeType: 'application/epub+zip'
                 });
                 
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = file.name.replace('.epub', '_converted.epub');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showStatus(`✓ Успешно! Заменено ${totalReplacements} ссылок. Файл скачан.`, 'success');
+                uploadButton.textContent = 'Скачать';
+                uploadButton.classList.remove('processing');
+                showStatus(`Готово! Обработано ${totalReplacements} ссылок`);
                 
             } catch (error) {
                 console.error('Error:', error);
-                showStatus(`Ошибка при обработке файла: ${error.message}`, 'error');
+                uploadButton.textContent = 'Загрузить';
+                uploadButton.classList.remove('processing');
+                processedBlob = null;
+                showStatus(`Ошибка: ${error.message}`, 'error');
             }
         }
 
@@ -470,17 +372,14 @@
                 const id = match[1];
                 const content = match[2];
                 
-                // Извлекаем весь текст после заголовка (всё между </div> и концом)
                 const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
                 if (textMatch) {
                     let text = stripHtmlTags(textMatch[1]);
-                    // Удаляем номер сноски в начале
                     text = text.replace(/^\s*\d+\s*\.?\s*/, '').trim();
                     
                     if (text.length > 0) {
                         globalFootnotes.set(id, text);
                         globalFootnotes.set(`${filename}#${id}`, text);
-                        console.log(`Сноска ${id}: ${text.substring(0, 80)}...`);
                     }
                 }
             }
@@ -505,9 +404,7 @@
                 
                 if (footnoteText) {
                     replacements++;
-                    // Рекурсивно обрабатываем ссылки внутри текста сноски
                     footnoteText = expandNestedFootnotes(footnoteText);
-                    // Оставляем оригинальную ссылку и добавляем текст сноски курсивом
                     return `<a ${attrs}>${linkText}</a> <i>[${footnoteText}]</i>`;
                 }
                 
@@ -518,7 +415,6 @@
         }
         
         function expandNestedFootnotes(text) {
-            // Ищем ссылки на сноски внутри текста сноски
             const nestedLinkPattern = /<a\s+([^>]*href=["']([^"']*#([^"']+))["'][^>]*)>([^<]*)<\/a>/gi;
             
             return text.replace(nestedLinkPattern, (fullMatch, attrs, href, anchorId, linkText) => {
@@ -533,7 +429,6 @@
                 }
                 
                 if (nestedFootnoteText) {
-                    // Добавляем текст вложенной сноски, но не разворачиваем дальше чтобы избежать бесконечной рекурсии
                     return `${linkText} [${nestedFootnoteText}]`;
                 }
                 
@@ -541,16 +436,12 @@
             });
         }
         
-        // Регистрация Service Worker для PWA
+        // Service Worker для PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('Service Worker зарегистрирован:', registration);
-                    })
-                    .catch(error => {
-                        console.log('Ошибка регистрации Service Worker:', error);
-                    });
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW error:', error));
             });
         }
     </script>

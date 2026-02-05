@@ -1,22 +1,22 @@
 {
-  "name": "Конвертер EPUB сносок",
-  "short_name": "EPUB сноски",
+  "name": "Конвертер EPUB",
+  "short_name": "EPUB",
   "description": "Преобразование концевых сносок в EPUB в текст в скобках",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#faf8f3",
-  "theme_color": "#8b4513",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%238b4513'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='280' fill='white'%3E📚%3C/text%3E%3C/svg%3E",
-      "sizes": "192x192",
+      "src": "data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='512' height='512' fill='white'/%3E%3Cg transform='translate(180, 247)'%3E%3Cpath d='M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z' fill='black'/%3E%3Cpath d='M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z' fill='black'/%3E%3Cpath d='M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z' fill='black'/%3E%3Cpath d='M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z' fill='black'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%238b4513'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='280' fill='white'%3E📚%3C/text%3E%3C/svg%3E",
-      "sizes": "512x512",
+      "src": "data:image/svg+xml,%3Csvg width='192' height='192' viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='192' height='192' fill='white'/%3E%3Cg transform='translate(79.5, 87)'%3E%3Cpath d='M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z' fill='black'/%3E%3Cpath d='M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z' fill='black'/%3E%3Cpath d='M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z' fill='black'/%3E%3Cpath d='M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z' fill='black'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
