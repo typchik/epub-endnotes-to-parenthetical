@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер EPUB сносок</title>
+    <meta name="description" content="Преобразование концевых сносок в EPUB в текст в скобках">
+    <meta name="theme-color" content="#8b4513">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EPUB сноски">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
+        :root {
+            --bg-primary: #faf8f3;
+            --bg-secondary: #f0ebe0;
+            --text-primary: #2b2618;
+            --text-secondary: #6b5e4f;
+            --accent: #8b4513;
+            --accent-light: #c19a6b;
+            --border: #d4c5a9;
+            --shadow: rgba(43, 38, 24, 0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Crimson Text', serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            position: relative;
+        }
+        
+        header::after {
+            content: '❦';
+            position: absolute;
+            bottom: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-primary);
+            padding: 0 1rem;
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.02em;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-weight: 400;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            box-shadow: 0 12px 48px var(--shadow);
+            transform: translateY(-2px);
+        }
+        
+        .drop-zone {
+            border: 3px dashed var(--accent-light);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+        
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            transform: scale(1.02);
+        }
+        
+        .drop-zone-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone:hover .drop-zone-icon {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+        
+        .drop-zone-text {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .drop-zone-hint {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 1.1rem;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .status.success {
+            border-left-color: #4a7c59;
+            background: #e8f5e9;
+            color: #2d5016;
+        }
+        
+        .status.error {
+            border-left-color: #c62828;
+            background: #ffebee;
+            color: #b71c1c;
+        }
+        
+        .status.processing {
+            border-left-color: var(--accent-light);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--accent-light);
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .info-box h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-box li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .info-box li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--accent-light);
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .file-icon {
+            font-size: 2rem;
+        }
+        
+        .file-details {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Конвертер EPUB</h1>
+            <p class="subtitle">Преобразование концевых сносок в текст в скобках</p>
+        </header>
+
+        <div class="info-box">
+            <h2>Как это работает?</h2>
+            <ul>
+                <li>Загрузите EPUB файл с концевыми сносками</li>
+                <li>Сервис найдет все ссылки на сноски типа [1], [2] и т.д.</li>
+                <li>Сноски будут вставлены прямо в текст: [текст сноски]</li>
+                <li>Скачайте новый EPUB файл для удобного чтения</li>
+            </ul>
+        </div>
+
+        <div class="upload-section">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-icon">📚</div>
+                <div class="drop-zone-text">Перетащите EPUB файл сюда</div>
+                <div class="drop-zone-hint">или нажмите для выбора файла</div>
+            </div>
+            <input type="file" id="fileInput" accept=".epub" />
+            
+            <div id="fileInfoContainer"></div>
+            <div id="statusContainer"></div>
+        </div>
+
+        <footer>
+            <p>Конвертер EPUB сносок · Все файлы обрабатываются локально в вашем браузере</p>
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const statusContainer = document.getElementById('statusContainer');
+        const fileInfoContainer = document.getElementById('fileInfoContainer');
+
+        const globalFootnotes = new Map();
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function showStatus(message, type = 'processing') {
+            const statusClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'processing';
+            const icon = type === 'processing' ? '<span class="spinner"></span>' : '';
+            statusContainer.innerHTML = `<div class="status ${statusClass}">${icon}${message}</div>`;
+        }
+
+        function showFileInfo(file) {
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfoContainer.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">📖</div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${sizeMB} МБ</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function stripHtmlTags(html) {
+            return html
+                .replace(/<br\s*\/?>/gi, ' ')
+                .replace(/<\/p>/gi, ' ')
+                .replace(/<[^>]+>/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        async function handleFile(file) {
+            if (!file.name.endsWith('.epub')) {
+                showStatus('Пожалуйста, выберите файл формата EPUB', 'error');
+                return;
+            }
+
+            showFileInfo(file);
+            showStatus('Загрузка файла...', 'processing');
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const modifiedZip = new JSZip();
+                globalFootnotes.clear();
+                
+                const mimetypeEntry = zip.file('mimetype');
+                if (mimetypeEntry) {
+                    const content = await mimetypeEntry.async('string');
+                    modifiedZip.file('mimetype', content, { compression: 'STORE' });
+                }
+                
+                zip.forEach((path, entry) => {
+                    if (path.startsWith('META-INF/') && !entry.dir) {
+                        modifiedZip.file(path, entry.async('string'));
+                    }
+                });
+                
+                showStatus('Поиск сносок...', 'processing');
+                
+                const allFiles = [];
+                zip.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir) {
+                        allFiles.push({ relativePath, zipEntry });
+                    }
+                });
+                
+                for (const { relativePath, zipEntry } of allFiles) {
+                    if (/\.(x?html?)$/i.test(relativePath)) {
+                        const content = await zipEntry.async('string');
+                        // Извлекаем сноски только из файлов с примечаниями
+                        if (content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
+                            content.includes('Примечание') || content.includes('Notes') || 
+                            content.includes('NOTES')) {
+                            extractFootnotes(content, relativePath);
+                        }
+                    }
+                }
+                
+                console.log(`Найдено ${globalFootnotes.size} сносок`);
+                showStatus(`Найдено ${globalFootnotes.size} сносок. Замена ссылок...`, 'processing');
+                
+                let totalReplacements = 0;
+                
+                for (const { relativePath, zipEntry } of allFiles) {
+                    if (/\.(x?html?)$/i.test(relativePath)) {
+                        const content = await zipEntry.async('string');
+                        const { modifiedContent, replacements } = replaceFootnoteLinks(content);
+                        totalReplacements += replacements;
+                        modifiedZip.file(relativePath, modifiedContent);
+                    } else {
+                        modifiedZip.file(relativePath, zipEntry.async('arraybuffer'));
+                    }
+                }
+                
+                showStatus('Создание нового EPUB файла...', 'processing');
+                
+                const blob = await modifiedZip.generateAsync({ 
+                    type: 'blob',
+                    mimeType: 'application/epub+zip'
+                });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name.replace('.epub', '_converted.epub');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus(`✓ Успешно! Заменено ${totalReplacements} ссылок. Файл скачан.`, 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Ошибка при обработке файла: ${error.message}`, 'error');
+            }
+        }
+
+        function extractFootnotes(html, filename) {
+            const spanPattern = /<span[^>]+id=["']([^"']+)["'][^>]*>([\s\S]*?)<\/span>/gi;
+            let match;
+            
+            while ((match = spanPattern.exec(html)) !== null) {
+                const id = match[1];
+                const content = match[2];
+                
+                // Извлекаем весь текст после заголовка (всё между </div> и концом)
+                const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
+                if (textMatch) {
+                    let text = stripHtmlTags(textMatch[1]);
+                    // Удаляем номер сноски в начале
+                    text = text.replace(/^\s*\d+\s*\.?\s*/, '').trim();
+                    
+                    if (text.length > 0) {
+                        globalFootnotes.set(id, text);
+                        globalFootnotes.set(`${filename}#${id}`, text);
+                        console.log(`Сноска ${id}: ${text.substring(0, 80)}...`);
+                    }
+                }
+            }
+        }
+
+        function replaceFootnoteLinks(html) {
+            let modifiedContent = html;
+            let replacements = 0;
+            
+            const linkPattern = /<a\s+([^>]*href=["']([^"']*#([^"']+))["'][^>]*)>([^<]*)<\/a>/gi;
+            
+            modifiedContent = modifiedContent.replace(linkPattern, (fullMatch, attrs, href, anchorId, linkText) => {
+                let footnoteText = globalFootnotes.get(anchorId);
+                
+                if (!footnoteText) {
+                    footnoteText = globalFootnotes.get(href);
+                }
+                
+                if (!footnoteText && href.startsWith('/')) {
+                    footnoteText = globalFootnotes.get(href.substring(1));
+                }
+                
+                if (footnoteText) {
+                    replacements++;
+                    // Рекурсивно обрабатываем ссылки внутри текста сноски
+                    footnoteText = expandNestedFootnotes(footnoteText);
+                    // Оставляем оригинальную ссылку и добавляем текст сноски курсивом
+                    return `<a ${attrs}>${linkText}</a> <i>[${footnoteText}]</i>`;
+                }
+                
+                return fullMatch;
+            });
+            
+            return { modifiedContent, replacements };
+        }
+        
+        function expandNestedFootnotes(text) {
+            // Ищем ссылки на сноски внутри текста сноски
+            const nestedLinkPattern = /<a\s+([^>]*href=["']([^"']*#([^"']+))["'][^>]*)>([^<]*)<\/a>/gi;
+            
+            return text.replace(nestedLinkPattern, (fullMatch, attrs, href, anchorId, linkText) => {
+                let nestedFootnoteText = globalFootnotes.get(anchorId);
+                
+                if (!nestedFootnoteText) {
+                    nestedFootnoteText = globalFootnotes.get(href);
+                }
+                
+                if (!nestedFootnoteText && href.startsWith('/')) {
+                    nestedFootnoteText = globalFootnotes.get(href.substring(1));
+                }
+                
+                if (nestedFootnoteText) {
+                    // Добавляем текст вложенной сноски, но не разворачиваем дальше чтобы избежать бесконечной рекурсии
+                    return `${linkText} [${nestedFootnoteText}]`;
+                }
+                
+                return linkText;
+            });
+        }
+        
+        // Регистрация Service Worker для PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker зарегистрирован:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Ошибка регистрации Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
