@@ -33,7 +33,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            --page-pad-x: 24px;
             padding: 40px 24px;
+        }
+
+        .footer {
+            position: fixed;
+            left: var(--page-pad-x);
+            bottom: 24px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10pt;
+            color: #E8E8E8;
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer a,
+        .footer a:visited,
+        .footer a:hover,
+        .footer a:active {
+            color: #E8E8E8;
+            text-decoration: none;
         }
         
         .container {
@@ -147,6 +167,7 @@
         
         @media (max-width: 640px) {
             body {
+                --page-pad-x: 64px;
                 padding: 40px 64px;
                 align-items: flex-start;
             }
@@ -189,6 +210,11 @@
         
         <div id="statusContainer"></div>
     </div>
+
+    <footer class="footer">
+        <a href="https://libgen.bz" target="_blank" rel="noopener noreferrer">libgen.bz</a>
+        <a href="https://flibusta.is" target="_blank" rel="noopener noreferrer">flibusta.is</a>
+    </footer>
 
     <script>
         // Локализация
