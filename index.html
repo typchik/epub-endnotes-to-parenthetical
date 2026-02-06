@@ -31,29 +31,18 @@
             background: #ffffff;
             color: #000000;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            --page-pad-x: 24px;
             padding: 40px 24px;
         }
-
-        .footer {
-            position: fixed;
-            left: var(--page-pad-x);
-            bottom: 24px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 10pt;
-            color: #E8E8E8;
+        
+        .content-wrapper {
+            flex: 1;
             display: flex;
-            gap: 24px;
-        }
-
-        .footer a,
-        .footer a:visited,
-        .footer a:hover,
-        .footer a:active {
-            color: #E8E8E8;
-            text-decoration: none;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
         
         .container {
@@ -165,55 +154,78 @@
             color: #ff0000;
         }
         
+        footer {
+            width: 100%;
+            max-width: 680px;
+            padding: 24px 0;
+            text-align: left;
+            font-size: 10px;
+            color: #E8E8E8;
+        }
+        
+        footer a {
+            color: #E8E8E8;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        
+        footer a:hover {
+            color: #E8E8E8;
+        }
+        
         @media (max-width: 640px) {
             body {
-                --page-pad-x: 64px;
                 padding: 40px 64px;
+            }
+            
+            .content-wrapper {
                 align-items: flex-start;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <svg width="33" height="18" viewBox="0 0 33 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z" fill="black"/>
-                <path d="M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z" fill="black"/>
-                <path d="M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z" fill="black"/>
-                <path d="M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z" fill="black"/>
-            </svg>
-        </div>
-        
-        <div class="description">
-            <p id="desc1"></p>
-            <p id="desc2"></p>
-            <p id="desc3"></p>
-        </div>
+    <div class="content-wrapper">
+        <div class="container">
+            <div class="logo">
+                <svg width="33" height="18" viewBox="0 0 33 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 18L3.0532 0H9.05783L8.79067 1.54071H4.59252L2.06091 16.4593H6.25906L5.9919 18H0Z" fill="black"/>
+                    <path d="M33 0L29.9468 18H23.9422L24.2093 16.4593H28.4075L30.9264 1.54071H26.7282L26.9954 0L33 0Z" fill="black"/>
+                    <path d="M15.266 17.6994L5.80108 14.7683L7.70933 2.94363L16.8944 5.78706L27.3007 2.86848L25.367 14.856L15.266 17.6994ZM7.95104 13.4656L15.2914 15.7328L23.675 13.3779L24.9472 5.4739L16.8689 7.74113L9.24865 5.38622L7.95104 13.453V13.4656Z" fill="black"/>
+                    <path d="M15.9382 6.62474L14.3258 16.5698L16.2102 16.866L17.8226 6.92094L15.9382 6.62474Z" fill="black"/>
+                </svg>
+            </div>
+            
+            <div class="description">
+                <p id="desc1"></p>
+                <p id="desc2"></p>
+                <p id="desc3"></p>
+            </div>
 
-        <div class="example">
-            <div class="example-label" id="labelBefore"></div>
-            <div class="example-text" id="exampleBefore"></div>
-        </div>
+            <div class="example">
+                <div class="example-label" id="labelBefore"></div>
+                <div class="example-text" id="exampleBefore"></div>
+            </div>
 
-        <div class="example">
-            <div class="example-label" id="labelAfter"></div>
-            <div class="example-text" id="exampleAfter"></div>
-        </div>
+            <div class="example">
+                <div class="example-label" id="labelAfter"></div>
+                <div class="example-text" id="exampleAfter"></div>
+            </div>
 
-        <div class="description">
-            <p id="desc4"></p>
-        </div>
+            <div class="description">
+                <p id="desc4"></p>
+            </div>
 
-        <button class="upload-button" id="uploadButton">Загрузить</button>
-        <input type="file" id="fileInput" accept=".epub" />
-        
-        <div id="statusContainer"></div>
+            <button class="upload-button" id="uploadButton">Загрузить</button>
+            <input type="file" id="fileInput" accept=".epub" />
+            
+            <div id="statusContainer"></div>
+        </div>
     </div>
-
-    <footer class="footer">
-        <a href="https://libgen.bz" target="_blank" rel="noopener noreferrer">libgen.bz</a>
-        <a href="https://flibusta.is" target="_blank" rel="noopener noreferrer">flibusta.is</a>
+    
+    <footer>
+        <a href="https://libgen.bz" target="_blank" rel="noopener">libgen.bz</a>
+        <a href="https://flibusta.is" target="_blank" rel="noopener">flibusta.is</a>
     </footer>
 
     <script>
@@ -263,7 +275,6 @@
             }
         };
 
-        // Определение языка
         function detectLanguage() {
             const userLang = navigator.language || navigator.userLanguage;
             return userLang.toLowerCase().startsWith('ru') ? 'ru' : 'en';
@@ -272,7 +283,6 @@
         const currentLang = detectLanguage();
         const t = translations[currentLang];
 
-        // Применение переводов
         function applyTranslations() {
             document.getElementById('desc1').innerHTML = t.description1;
             document.getElementById('desc2').innerHTML = t.description2;
@@ -292,7 +302,6 @@
         let processedBlob = null;
         let originalFilename = '';
 
-        // Применяем переводы при загрузке
         applyTranslations();
 
         uploadButton.addEventListener('click', () => {
@@ -396,12 +405,25 @@
                     }
                 });
                 
+                // Улучшенный поиск файлов со сносками
                 for (const { relativePath, zipEntry } of allFiles) {
                     if (/\.(x?html?)$/i.test(relativePath)) {
                         const content = await zipEntry.async('string');
+                        
+                        // Ищем файлы с большим количеством <span id>
+                        const spanCount = (content.match(/<span[^>]+id=/gi) || []).length;
+                        
+                        // Если много span с id (больше 5), считаем это файлом сносок
+                        if (spanCount > 5) {
+                            extractFootnotes(content, relativePath);
+                            continue;
+                        }
+                        
+                        // Или ищем по ключевым словам
                         if (content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
                             content.includes('Примечание') || content.includes('Notes') || 
-                            content.includes('NOTES')) {
+                            content.includes('NOTES') || content.includes('Комментарии') ||
+                            content.includes('КОММЕНТАРИИ') || content.includes('Comments')) {
                             extractFootnotes(content, relativePath);
                         }
                     }
@@ -514,7 +536,6 @@
             });
         }
         
-        // Service Worker для PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
