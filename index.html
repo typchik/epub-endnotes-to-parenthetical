@@ -206,7 +206,6 @@
                 btnDownload: 'Скачать',
                 btnProcessing: 'Обработка...',
                 statusProcessing: 'Обработка файла...',
-                statusRestructuring: 'Реструктуризация глав...',
                 statusSearching: 'Поиск примечаний...',
                 statusFound: 'Найдено {count} примечаний',
                 statusCreating: 'Создание файла...',
@@ -228,7 +227,6 @@
                 btnDownload: 'Download',
                 btnProcessing: 'Processing...',
                 statusProcessing: 'Processing file...',
-                statusRestructuring: 'Restructuring chapters...',
                 statusSearching: 'Searching for notes...',
                 statusFound: 'Found {count} notes',
                 statusCreating: 'Creating file...',
@@ -348,22 +346,16 @@
 
             try {
                 const zip = await JSZip.loadAsync(file);
-                
-                // ЭТАП 1: Реструктуризация - объединение файлов по главам
-                showStatus('Реструктуризация глав...');
-                const restructuredZip = await restructureEpub(zip);
-                
-                // ЭТАП 2: Обработка сносок
                 const modifiedZip = new JSZip();
                 globalFootnotes.clear();
                 
-                const mimetypeEntry = restructuredZip.file('mimetype');
+                const mimetypeEntry = zip.file('mimetype');
                 if (mimetypeEntry) {
                     const content = await mimetypeEntry.async('string');
                     modifiedZip.file('mimetype', content, { compression: 'STORE' });
                 }
                 
-                restructuredZip.forEach((path, entry) => {
+                zip.forEach((path, entry) => {
                     if (path.startsWith('META-INF/') && !entry.dir) {
                         modifiedZip.file(path, entry.async('string'));
                     }
@@ -372,7 +364,7 @@
                 showStatus(t.statusSearching);
                 
                 const allFiles = [];
-                restructuredZip.forEach((relativePath, zipEntry) => {
+                zip.forEach((relativePath, zipEntry) => {
                     if (!zipEntry.dir) {
                         allFiles.push({ relativePath, zipEntry });
                     }
@@ -422,208 +414,6 @@
                 processedBlob = null;
                 showStatus(t.errorGeneric.replace('{message}', error.message), 'error');
             }
-        }
-
-        // Функция реструктуризации EPUB
-        async function restructureEpub(zip) {
-            // Парсим оглавление
-            const tocFile = zip.file('OPS/toc.ncx') || zip.file('OEBPS/toc.ncx') || zip.file('toc.ncx');
-            if (!tocFile) {
-                console.log('toc.ncx не найден, пропускаем реструктуризацию');
-                return zip; // Если нет оглавления, возвращаем как есть
-            }
-
-            const tocContent = await tocFile.async('string');
-            const chapters = parseTableOfContents(tocContent);
-            
-            if (chapters.length === 0) {
-                console.log('Главы не найдены в оглавлении');
-                return zip;
-            }
-
-            // Собираем все HTML файлы и их содержимое
-            const htmlFiles = {};
-            const htmlFilesList = [];
-            
-            zip.forEach((relativePath, zipEntry) => {
-                if (!zipEntry.dir && /\.(x?html?)$/i.test(relativePath)) {
-                    htmlFilesList.push(relativePath);
-                }
-            });
-            
-            htmlFilesList.sort();
-            
-            for (const path of htmlFilesList) {
-                const content = await zip.file(path).async('string');
-                htmlFiles[path] = content;
-            }
-
-            // Создаем новый ZIP с реструктурированными главами
-            const newZip = new JSZip();
-            
-            // Копируем mimetype и META-INF
-            const mimetypeEntry = zip.file('mimetype');
-            if (mimetypeEntry) {
-                newZip.file('mimetype', await mimetypeEntry.async('string'), { compression: 'STORE' });
-            }
-            
-            zip.forEach((path, entry) => {
-                if (path.startsWith('META-INF/') && !entry.dir) {
-                    newZip.file(path, entry.async('string'));
-                }
-            });
-
-            // Определяем директорию контента (OPS или OEBPS)
-            const contentDir = htmlFilesList[0].split('/')[0];
-            
-            // Объединяем файлы по главам
-            const mergedChapters = await mergeChapterFiles(chapters, htmlFiles, contentDir);
-            
-            // Добавляем объединенные главы в новый ZIP
-            mergedChapters.forEach(chapter => {
-                newZip.file(chapter.path, chapter.content);
-            });
-            
-            // Копируем все остальные файлы (CSS, изображения и т.д.)
-            zip.forEach((relativePath, zipEntry) => {
-                if (!zipEntry.dir && 
-                    !relativePath.startsWith('META-INF/') && 
-                    relativePath !== 'mimetype' &&
-                    !/\.(x?html?)$/i.test(relativePath)) {
-                    newZip.file(relativePath, zipEntry.async('arraybuffer'));
-                }
-            });
-            
-            // Обновляем content.opf
-            await updateContentOpf(zip, newZip, mergedChapters, contentDir);
-            
-            // Обновляем toc.ncx
-            await updateTocNcx(zip, newZip, mergedChapters, contentDir);
-            
-            return newZip;
-        }
-
-        function parseTableOfContents(tocXml) {
-            const chapters = [];
-            const navPointRegex = /<navPoint[^>]*>[\s\S]*?<text>(.*?)<\/text>[\s\S]*?<content src="([^"]+)"[\s\S]*?<\/navPoint>/g;
-            let match;
-            
-            while ((match = navPointRegex.exec(tocXml)) !== null) {
-                const title = match[1];
-                const src = match[2];
-                const [file, anchor] = src.split('#');
-                
-                chapters.push({
-                    title: title,
-                    startFile: file,
-                    anchor: anchor || ''
-                });
-            }
-            
-            return chapters;
-        }
-
-        async function mergeChapterFiles(chapters, htmlFiles, contentDir) {
-            const mergedChapters = [];
-            const filesList = Object.keys(htmlFiles).sort();
-            
-            for (let i = 0; i < chapters.length; i++) {
-                const chapter = chapters[i];
-                const startFile = `${contentDir}/${chapter.startFile}`;
-                const nextChapterFile = i < chapters.length - 1 ? `${contentDir}/${chapters[i + 1].startFile}` : null;
-                
-                // Находим индексы файлов для этой главы
-                const startIndex = filesList.indexOf(startFile);
-                if (startIndex === -1) continue;
-                
-                const endIndex = nextChapterFile ? filesList.indexOf(nextChapterFile) : filesList.length;
-                
-                // Собираем содержимое всех файлов главы
-                let mergedContent = '';
-                const filesToMerge = filesList.slice(startIndex, endIndex);
-                
-                for (const filePath of filesToMerge) {
-                    let content = htmlFiles[filePath];
-                    
-                    // Извлекаем содержимое body
-                    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-                    if (bodyMatch) {
-                        mergedContent += bodyMatch[1];
-                    }
-                }
-                
-                // Берем заголовок и структуру из первого файла
-                const firstFileContent = htmlFiles[startFile];
-                const headMatch = firstFileContent.match(/<head[^>]*>[\s\S]*?<\/head>/i);
-                const xmlDeclaration = firstFileContent.match(/<\?xml[^>]+\?>/)?.[0] || '<?xml version="1.0" encoding="UTF-8"?>';
-                const htmlOpenTag = firstFileContent.match(/<html[^>]*>/i)?.[0] || '<html xmlns="http://www.w3.org/1999/xhtml">';
-                const bodyOpenTag = firstFileContent.match(/<body[^>]*>/i)?.[0] || '<body>';
-                
-                const newFileName = `chapter_${i + 1}.xhtml`;
-                const fullContent = `${xmlDeclaration}\n${htmlOpenTag}\n${headMatch?.[0] || '<head><title/></head>'}\n${bodyOpenTag}\n${mergedContent}\n</body>\n</html>`;
-                
-                mergedChapters.push({
-                    path: `${contentDir}/${newFileName}`,
-                    originalStart: chapter.startFile,
-                    anchor: chapter.anchor,
-                    content: fullContent,
-                    title: chapter.title
-                });
-            }
-            
-            return mergedChapters;
-        }
-
-        async function updateContentOpf(oldZip, newZip, mergedChapters, contentDir) {
-            const opfFile = oldZip.file(`${contentDir}/content.opf`) || oldZip.file('content.opf');
-            if (!opfFile) return;
-            
-            let opfContent = await opfFile.async('string');
-            
-            // Удаляем старые записи HTML файлов из manifest
-            opfContent = opfContent.replace(/<item[^>]*href="[^"]*\.x?html?"[^>]*\/>/g, '');
-            
-            // Добавляем новые главы в manifest
-            let manifestInsert = '';
-            mergedChapters.forEach((chapter, index) => {
-                const fileName = chapter.path.split('/').pop();
-                manifestInsert += `<item id="chapter${index + 1}" href="${fileName}" media-type="application/xhtml+xml"/>\n`;
-            });
-            
-            opfContent = opfContent.replace('</manifest>', manifestInsert + '</manifest>');
-            
-            // Обновляем spine
-            const spineMatch = opfContent.match(/<spine[^>]*>([\s\S]*?)<\/spine>/);
-            if (spineMatch) {
-                let newSpine = '<spine toc="ncx">\n';
-                mergedChapters.forEach((chapter, index) => {
-                    newSpine += `<itemref idref="chapter${index + 1}"/>\n`;
-                });
-                newSpine += '</spine>';
-                opfContent = opfContent.replace(/<spine[^>]*>[\s\S]*?<\/spine>/, newSpine);
-            }
-            
-            newZip.file(`${contentDir}/content.opf`, opfContent);
-        }
-
-        async function updateTocNcx(oldZip, newZip, mergedChapters, contentDir) {
-            const tocFile = oldZip.file(`${contentDir}/toc.ncx`) || oldZip.file('toc.ncx');
-            if (!tocFile) return;
-            
-            let tocContent = await tocFile.async('string');
-            
-            // Обновляем ссылки в navMap
-            mergedChapters.forEach((chapter, index) => {
-                const fileName = chapter.path.split('/').pop();
-                const oldSrc = chapter.originalStart;
-                const newSrc = chapter.anchor ? `${fileName}#${chapter.anchor}` : fileName;
-                
-                // Заменяем старую ссылку на новую
-                const regex = new RegExp(`<content src="${oldSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*"`, 'g');
-                tocContent = tocContent.replace(regex, `<content src="${newSrc}"`);
-            });
-            
-            newZip.file(`${contentDir}/toc.ncx`, tocContent);
         }
 
         function extractFootnotes(html, filename) {
