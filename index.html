@@ -113,10 +113,17 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 48px;
+            margin-bottom: 64px;
             box-shadow: 0 0 0 rgba(0, 0, 0, 0);
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        .button-status-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 24px;
         }
         
         .upload-button:hover {
@@ -144,9 +151,7 @@
         }
         
         .status {
-            margin-top: 24px;
-            font-size: 14px;
-            text-align: center;
+            font-size: 10px;
             color: #A9A9A9;
         }
         
@@ -157,7 +162,7 @@
         footer {
             width: 100%;
             max-width: 680px;
-            padding: 24px 0;
+            padding-bottom: 32px;
             text-align: left;
             font-size: 10px;
             color: #E8E8E8;
@@ -216,10 +221,11 @@
                 <p id="desc4"></p>
             </div>
 
-            <button class="upload-button" id="uploadButton">Загрузить</button>
+            <div class="button-status-wrapper">
+                <button class="upload-button" id="uploadButton">Загрузить</button>
+                <div id="statusContainer"></div>
+            </div>
             <input type="file" id="fileInput" accept=".epub" />
-            
-            <div id="statusContainer"></div>
         </div>
     </div>
     
@@ -352,7 +358,12 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            showStatus(t.statusDownloaded);
+            // Сбрасываем состояние после скачивания
+            processedBlob = null;
+            originalFilename = '';
+            uploadButton.textContent = t.btnUpload;
+            uploadButton.classList.remove('success');
+            statusContainer.innerHTML = '';
         }
 
         function showStatus(message, type = '') {
