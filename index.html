@@ -97,11 +97,11 @@
             font-style: italic;
         }
         
-      .button-status-wrapper {
+        .button-status-wrapper {
             display: flex;
             align-items: center;
             gap: 24px;
-            margin-top: 48px;
+            margin-top: 32px;
             margin-bottom: 64px;
         }
         
@@ -248,7 +248,7 @@
                 description4: 'Загрузите EPUB файл, и\u00A0получите новый файл, в\u00A0котором все примечания встроены в\u00A0текст курсивом в\u00A0квадратных скобках.',
                 btnUpload: 'Загрузить',
                 btnDownload: 'Скачать',
-                btnProcessing: 'Обработка',
+                btnProcessing: 'Обработка...',
                 statusProcessing: 'Обработка файла...',
                 statusSearching: 'Поиск примечаний...',
                 statusFound: 'Найдено {count} примечаний',
@@ -430,12 +430,19 @@
                             continue;
                         }
                         
-                        // Или ищем по ключевым словам
+                        // Ищем по ключевым словам
                         if (content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
                             content.includes('Примечание') || content.includes('Notes') || 
                             content.includes('NOTES') || content.includes('Комментарии') ||
                             content.includes('КОММЕНТАРИИ') || content.includes('Comments')) {
                             extractFootnotes(content, relativePath);
+                            continue;
+                        }
+                        
+                        // Если это отдельный файл сноски (содержит ровно 1 span с id)
+                        // И файл маленький (меньше 5000 символов)
+                        if (spanCount === 1 && content.length < 5000) {
+                            extractSingleFootnote(content, relativePath);
                         }
                     }
                 }
@@ -496,6 +503,34 @@
             }
         }
 
+        function extractSingleFootnote(html, filename) {
+            // Для файлов, где каждая сноска в отдельном файле
+            const spanPattern = /<span[^>]+id=["']([^"']+)["'][^>]*>([\s\S]*?)<\/span>/i;
+            const match = spanPattern.exec(html);
+            
+            if (match) {
+                const id = match[1];
+                const content = match[2];
+                
+                // Извлекаем текст после </div>
+                const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
+                if (textMatch) {
+                    let text = stripHtmlTags(textMatch[1]);
+                    text = text.replace(/^\s*\d+\s*\.?\s*/, '').trim();
+                    
+                    if (text.length > 0) {
+                        // Сохраняем по ID
+                        globalFootnotes.set(id, text);
+                        // Сохраняем по полному пути filename#id
+                        globalFootnotes.set(`${filename}#${id}`, text);
+                        // Также сохраняем просто по имени файла (без расширения и пути)
+                        const fileOnly = filename.split('/').pop();
+                        globalFootnotes.set(`${fileOnly}#${id}`, text);
+                    }
+                }
+            }
+        }
+
         function replaceFootnoteLinks(html) {
             let modifiedContent = html;
             let replacements = 0;
@@ -511,6 +546,12 @@
                 
                 if (!footnoteText && href.startsWith('/')) {
                     footnoteText = globalFootnotes.get(href.substring(1));
+                }
+                
+                // Пробуем найти по имени файла (для случаев типа ch2-41.xhtml#id187)
+                if (!footnoteText) {
+                    const fileOnly = href.split('/').pop(); // Получаем только имя файла с якорем
+                    footnoteText = globalFootnotes.get(fileOnly);
                 }
                 
                 if (footnoteText) {
