@@ -512,6 +512,14 @@
                 const id = match[1];
                 const content = match[2];
                 
+                // Извлекаем номер сноски - ищем первый <p> с числом после <div>
+                const numberMatch = content.match(/<div[^>]*>[\s\S]*?<p[^>]*>\s*(\d+)\s*<\/p>/i);
+                let footnoteNumber = null;
+                
+                if (numberMatch) {
+                    footnoteNumber = numberMatch[1];
+                }
+                
                 // Извлекаем текст после </div>
                 const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
                 if (textMatch) {
@@ -523,9 +531,13 @@
                         globalFootnotes.set(id, text);
                         // Сохраняем по полному пути filename#id
                         globalFootnotes.set(`${filename}#${id}`, text);
-                        // Также сохраняем просто по имени файла (без расширения и пути)
+                        // Также сохраняем просто по имени файла
                         const fileOnly = filename.split('/').pop();
                         globalFootnotes.set(`${fileOnly}#${id}`, text);
+                        // Сохраняем по номеру сноски для дополнительной проверки
+                        if (footnoteNumber) {
+                            globalFootnotes.set(`footnote-${footnoteNumber}`, text);
+                        }
                     }
                 }
             }
@@ -552,6 +564,14 @@
                 if (!footnoteText) {
                     const fileOnly = href.split('/').pop(); // Получаем только имя файла с якорем
                     footnoteText = globalFootnotes.get(fileOnly);
+                }
+                
+                // Пробуем найти по номеру из текста ссылки [41] -> footnote-41
+                if (!footnoteText) {
+                    const numberMatch = linkText.match(/\[(\d+)\]/);
+                    if (numberMatch) {
+                        footnoteText = globalFootnotes.get(`footnote-${numberMatch[1]}`);
+                    }
                 }
                 
                 if (footnoteText) {
