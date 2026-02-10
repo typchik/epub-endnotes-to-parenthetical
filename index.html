@@ -424,17 +424,20 @@
                         // Ищем файлы с большим количеством <span id>
                         const spanCount = (content.match(/<span[^>]+id=/gi) || []).length;
                         
-                        // Если много span с id (больше 5), считаем это файлом сносок
-                        if (spanCount > 5) {
+                        // Проверяем наличие ключевых слов
+                        const hasKeywords = content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
+                            content.includes('Примечание') || content.includes('Notes') || 
+                            content.includes('NOTES') || content.includes('Комментарии') ||
+                            content.includes('КОММЕНТАРИИ') || content.includes('Comments');
+                        
+                        // Если много span с id (больше 5) И есть ключевые слова, считаем это файлом сносок
+                        if (spanCount > 5 && hasKeywords) {
                             extractFootnotes(content, relativePath);
                             continue;
                         }
                         
-                        // Ищем по ключевым словам
-                        if (content.includes('Примечания') || content.includes('ПРИМЕЧАНИЯ') || 
-                            content.includes('Примечание') || content.includes('Notes') || 
-                            content.includes('NOTES') || content.includes('Комментарии') ||
-                            content.includes('КОММЕНТАРИИ') || content.includes('Comments')) {
+                        // Ищем по ключевым словам в файлах с меньшим количеством span
+                        if (hasKeywords && spanCount > 0 && spanCount <= 5) {
                             extractFootnotes(content, relativePath);
                             continue;
                         }
@@ -490,13 +493,15 @@
                 const id = match[1];
                 const content = match[2];
                 
-                // Берем только первый <p> после </div>
-                const textMatch = content.match(/<\/div>\s*<p[^>]*>([\s\S]*?)<\/p>/i);
+                // Ищем текст после </div>
+                const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
                 if (textMatch) {
                     let text = stripHtmlTags(textMatch[1]);
                     text = text.replace(/^\s*\d+\s*\.?\s*/, '').trim();
                     
-                    if (text.length > 0) {
+                    // Защита от глав: если текст слишком длинный (>2000 символов),
+                    // это скорее всего глава, а не сноска
+                    if (text.length > 0 && text.length < 2000) {
                         globalFootnotes.set(id, text);
                         globalFootnotes.set(`${filename}#${id}`, text);
                     }
