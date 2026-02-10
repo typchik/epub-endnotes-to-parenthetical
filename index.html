@@ -490,7 +490,8 @@
                 const id = match[1];
                 const content = match[2];
                 
-                const textMatch = content.match(/<\/div>([\s\S]*?)$/i);
+                // Берем только первый <p> после </div>
+                const textMatch = content.match(/<\/div>\s*<p[^>]*>([\s\S]*?)<\/p>/i);
                 if (textMatch) {
                     let text = stripHtmlTags(textMatch[1]);
                     text = text.replace(/^\s*\d+\s*\.?\s*/, '').trim();
@@ -498,6 +499,55 @@
                     if (text.length > 0) {
                         globalFootnotes.set(id, text);
                         globalFootnotes.set(`${filename}#${id}`, text);
+                    }
+                }
+            }
+            
+            // Также ищем сноски с pattern <p class="endnote" id="..."><span class="endNum">...</span>
+            const endnotePattern = /<p[^>]*class=["']endnote["'][^>]*id=["']([^"']+)["'][^>]*>([\s\S]*?)<\/p>/gi;
+            let endMatch;
+            
+            while ((endMatch = endnotePattern.exec(html)) !== null) {
+                const id = endMatch[1];
+                const content = endMatch[2];
+                
+                // Извлекаем текст после </span> (пропускаем номер)
+                const textMatch = content.match(/<\/span>([\s\S]*?)$/i);
+                if (textMatch) {
+                    let text = stripHtmlTags(textMatch[1]);
+                    // Убираем стрелку возврата в конце ↩
+                    text = text.replace(/↩\s*$/, '').trim();
+                    
+                    if (text.length > 0) {
+                        globalFootnotes.set(id, text);
+                        globalFootnotes.set(`${filename}#${id}`, text);
+                        
+                        // Также сохраняем по имени файла без пути
+                        const fileOnly = filename.split('/').pop();
+                        globalFootnotes.set(`${fileOnly}#${id}`, text);
+                    }
+                }
+            }
+            
+            // Ищем внутристраничные сноски в <aside epub:type="footnote">
+            const asidePattern = /<aside[^>]*id=["']([^"']+)["'][^>]*epub:type=["']footnote["'][^>]*>([\s\S]*?)<\/aside>/gi;
+            let asideMatch;
+            
+            while ((asideMatch = asidePattern.exec(html)) !== null) {
+                const id = asideMatch[1];
+                const content = asideMatch[2];
+                
+                // Извлекаем текст из <p class="footnote">
+                const textMatch = content.match(/<p[^>]*class=["']footnote["'][^>]*>([\s\S]*?)<\/p>/i);
+                if (textMatch) {
+                    let text = stripHtmlTags(textMatch[1]);
+                    text = text.trim();
+                    
+                    if (text.length > 0) {
+                        globalFootnotes.set(id, text);
+                        globalFootnotes.set(`${filename}#${id}`, text);
+                        // Сохраняем также просто по якорю без #
+                        globalFootnotes.set(`#${id}`, text);
                     }
                 }
             }
@@ -556,6 +606,11 @@
                     footnoteText = globalFootnotes.get(href);
                 }
                 
+                // Для внутристраничных ссылок типа #footnote-ref-4
+                if (!footnoteText && href.startsWith('#')) {
+                    footnoteText = globalFootnotes.get(href);
+                }
+                
                 if (!footnoteText && href.startsWith('/')) {
                     footnoteText = globalFootnotes.get(href.substring(1));
                 }
@@ -566,9 +621,15 @@
                     footnoteText = globalFootnotes.get(fileOnly);
                 }
                 
+                // Для относительных путей ../Text/Endnotes.xhtml#endnote-3
+                if (!footnoteText && href.includes('/')) {
+                    const fileName = href.split('/').pop(); // endnote-3 из Endnotes.xhtml#endnote-3
+                    footnoteText = globalFootnotes.get(fileName);
+                }
+                
                 // Пробуем найти по номеру из текста ссылки [41] -> footnote-41
                 if (!footnoteText) {
-                    const numberMatch = linkText.match(/\[(\d+)\]/);
+                    const numberMatch = linkText.match(/\[?(\d+)\]?/);
                     if (numberMatch) {
                         footnoteText = globalFootnotes.get(`footnote-${numberMatch[1]}`);
                     }
